@@ -1,40 +1,63 @@
-
 def solve_day2(data)
   reports = data.split("\n").map { |report| report.split.map(&:to_i) }
   safe_count = 0
 
-  reports.each do |report|
-    trend = false
-    safe = false    
-    report.each_with_index do |value, i|
-      # skip last iteration
-      if report.size - 1 == i
-        safe = true
-        break
-      end
-
-      diff = value - report[i + 1]
-      
-      # Cannot be same number twice.
-      break if diff == 0
-      
-      # Set increasing/decreasing trend.
-      if i == 0
-        trend = diff < 0
-      else
-        break if diff < 0 != trend
-      end
-      
-      # Max difference must be three.
-      break if diff.abs > 3
-    end
-
-    if safe
+  reports.each do |report| 
+    if is_safe? report
       safe_count += 1 
+      next
     end
   end
 
-  puts safe_count
+  puts "Safe reports: #{safe_count}"
+  safe_count = 0
+
+  reports.each do |report|
+    # check if safe without removing any number
+    if is_safe?(report)
+      safe_count += 1
+      next
+    end
+    
+    # Try removing each number at a time
+    report.each_with_index do |_, skip_index|
+      # Create new array without the current number
+      modified_report = report.each_with_index.reject { |_, i| i == skip_index }.map(&:first)
+      
+      if is_safe?(modified_report)
+        safe_count += 1
+        break  # No need to check other numbers once we find a solution
+      end
+    end
+  end
+  puts "Safe reports with Problem Dampener: #{safe_count}"
+end
+
+def is_safe?(report)
+  trend = false
+  
+  report.each_with_index do |value, i|
+    # If we reach the end, the report is safe
+    if report.size - 1 == i
+      return true
+    end
+    
+    diff = value - report[i + 1]
+    
+    # Cannot be same number twice
+    return false if diff == 0
+    
+    # Set or check increasing/decreasing trend
+    if i == 0
+      trend = diff < 0
+    else
+      return false if diff < 0 != trend
+    end
+    
+    # Max difference must be three
+    return false if diff.abs > 3
+  end
+  true
 end
 
 solve_day2 DATA.read
